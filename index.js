@@ -41,8 +41,10 @@ app.post('/send-notification', async (req, res) => {
 
   try {
     // Send the notification
-    const response = await admin.messaging().send(message);
-    console.log('Successfully sent message:', response);
+    setTimeout(async () => {
+      const response = await admin.messaging().send(message);
+      console.log('Successfully sent message:', response);
+    }, 5000);
     res.status(200).json({ message: 'Notification sent successfully', response });
   } catch (error) {
     console.error('Error sending notification:', error);
