@@ -2,8 +2,9 @@
 const express = require('express');
 const admin = require('firebase-admin');
 const bodyParser = require('body-parser');
+const axios = require('axios');
+const cheerio = require('cheerio');
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
 
 // Initialize the Express app
 const app = express();
@@ -49,6 +50,65 @@ app.post('/send-notification', async (req, res) => {
   } catch (error) {
     console.error('Error sending notification:', error);
     res.status(500).json({ error: 'Failed to send notification', details: error.message });
+  }
+});
+
+// New endpoint to get recipe details from a URL
+app.post('/get-recipe', async (req, res) => {
+  const { url } = req.body;
+
+  if (!url) {
+    return res.status(400).json({ error: 'Missing URL' });
+  }
+
+  try {
+    // Fetch the HTML content of the page
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    // Extract the required information
+    const name = $("h1").text();
+    const featuredIn = $("a.featured-category").text();
+    const description = $("div.recipe-description").text();
+    const prepTime = $("span.prep-time").text();
+    const cookTime = $("span.cook-time").text();
+
+    const ingredients = [];
+    $("li.ingredient").each((i, elem) => {
+      const amount = $(elem).find(".ingredient-amount").text();
+      const item = $(elem).find(".ingredient-item").text();
+      ingredients.push({ amount, item });
+    });
+
+    const instructions = [];
+    $("li.instruction-step").each((i, elem) => {
+      instructions.push($(elem).text());
+    });
+
+    const nutrition = {
+      calories: $("span.nutrition-calories").text(),
+      protein: $("span.nutrition-protein").text(),
+      fat: $("span.nutrition-fat").text(),
+      carbs: $("span.nutrition-carbs").text(),
+    };
+
+    const servings = $("span.servings").text();
+
+    // Return the recipe information as a JSON response
+    res.status(200).json({
+      name,
+      featuredIn,
+      description,
+      prepTime,
+      cookTime,
+      ingredients,
+      instructions,
+      nutrition,
+      servings,
+    });
+  } catch (error) {
+    console.error('Error scraping recipe:', error);
+    res.status(500).json({ error: 'Failed to scrape recipe', details: error.message });
   }
 });
 
