@@ -6,6 +6,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 const { createClient } = require('@supabase/supabase-js');
+const cors = require('cors'); // Import cors middleware\
 
 const app = express();
 const PORT = process.env.PORT || 3000;
