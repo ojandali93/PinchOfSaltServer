@@ -112,6 +112,64 @@ app.post('/get-recipe', async (req, res) => {
   }
 });
 
+app.post('/reset-password', async (req, res) => {
+  const { email, token, password } = req.body;
+
+  // Validate request data
+  if (!email || !token || !password) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    // Verify the reset token (for Firebase, you may need to use another verification method)
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    if (decodedToken.email !== email) {
+      return res.status(400).json({ error: 'Invalid token for this email' });
+    }
+
+    // Update the user's password in Firebase
+    const user = await admin.auth().getUserByEmail(email);
+    await admin.auth().updateUser(user.uid, { password });
+
+    // Respond with success
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).json({ error: 'Failed to reset password', details: error.message });
+  }
+});
+
+app.get('/confirm-email', async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).send('Invalid or missing token');
+  }
+
+  try {
+    // Fetch the user record associated with the token
+    const userDoc = await admin.firestore().collection('emailConfirmations').doc(token).get();
+
+    if (!userDoc.exists) {
+      return res.status(400).send('Invalid or expired token');
+    }
+
+    const { email } = userDoc.data();
+
+    // Update the user's email_verified status in your database
+    await admin.auth().updateUser(email, { emailVerified: true });
+
+    // Delete the token after successful verification
+    await admin.firestore().collection('emailConfirmations').doc(token).delete();
+
+    // Redirect to a success page or send a success response
+    return res.status(200).send('success');
+  } catch (error) {
+    console.error('Error confirming email:', error);
+    res.status(500).send('Failed to confirm email. Please try again.');
+  }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Notification server is running on http://localhost:${PORT}`);
