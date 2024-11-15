@@ -7,22 +7,21 @@ const cheerio = require('cheerio');
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 const { createClient } = require('@supabase/supabase-js');
 
-
-// Initialize the Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Use body-parser to parse incoming JSON requests
+app.use(cors({
+  origin: 'https://sweetyandsavoryinc.github.io', 
+}));
+
 app.use(bodyParser.json());
 
-// Initialize Firebase Admin SDK with the service account key
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-// Endpoint to send notification
 app.post('/send-notification', async (req, res) => {
   const { fcmToken, title, body, imageUrl } = req.body;
 
