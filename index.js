@@ -143,8 +143,8 @@ app.post('/reset-password', async (req, res) => {
   }
 });
 
-app.get('/confirm-email', async (req, res) => {
-  const { token } = req.query;
+app.post('/confirm-email', async (req, res) => {
+  const { token, email } = req.body;
 
   console.log('request token confirm email: ', token)
 
@@ -155,6 +155,7 @@ app.get('/confirm-email', async (req, res) => {
   try {
     // Verify the token using Supabase
     const { data, error } = await supabase.auth.verifyOtp({
+      email,
       token,
       type: 'signup', // Type of OTP: 'signup' for email confirmation
     });
