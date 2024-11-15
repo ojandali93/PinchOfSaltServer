@@ -18,6 +18,8 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
 // Endpoint to send notification
 app.post('/send-notification', async (req, res) => {
   const { fcmToken, title, body, imageUrl } = req.body;
@@ -142,34 +144,33 @@ app.post('/reset-password', async (req, res) => {
 app.get('/confirm-email', async (req, res) => {
   const { token } = req.query;
 
+  console.log('request token confirm email: ', token)
+
   if (!token) {
     return res.status(400).send('Invalid or missing token');
   }
 
   try {
-    // Fetch the user record associated with the token
-    const userDoc = await admin.firestore().collection('emailConfirmations').doc(token).get();
+    // Verify the token using Supabase
+    const { data, error } = await supabase.auth.verifyOtp({
+      token,
+      type: 'signup', // Type of OTP: 'signup' for email confirmation
+    });
 
-    if (!userDoc.exists) {
+    console.log('response data: ', data)
+
+    if (error) {
+      console.error('Error confirming email:', error);
       return res.status(400).send('Invalid or expired token');
     }
 
-    const { email } = userDoc.data();
-
-    // Update the user's email_verified status in your database
-    await admin.auth().updateUser(email, { emailVerified: true });
-
-    // Delete the token after successful verification
-    await admin.firestore().collection('emailConfirmations').doc(token).delete();
-
-    // Redirect to a success page or send a success response
-    return res.status(200).send('success');
-  } catch (error) {
-    console.error('Error confirming email:', error);
-    res.status(500).send('Failed to confirm email. Please try again.');
+    // If successful, return a success message
+    res.status(200).send({success: 'Successfully confirmed email'});
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).send('An unexpected error occurred. Please try again later.');
   }
 });
-
 // Start the server
 app.listen(PORT, () => {
   console.log(`Notification server is running on http://localhost:${PORT}`);
