@@ -157,7 +157,7 @@ app.post('/confirm-email', async (req, res) => {
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
-      type: 'signup', // Type of OTP: 'signup' for email confirmation
+      type: 'email', // Type of OTP: 'signup' for email confirmation
     });
 
     console.log('response data: ', data)
