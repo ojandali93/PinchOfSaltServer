@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+const { createClient } = require('@supabase/supabase-js');
+
 
 // Initialize the Express app
 const app = express();
