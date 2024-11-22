@@ -25,7 +25,10 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 
 app.post('/send-notification', async (req, res) => {
   const { fcmToken, title, body, imageUrl } = req.body;
-
+  console.log(fcmToken)
+  console.log(title)
+  console.log(body)
+  console.log(imageUrl)
   if (!fcmToken || !title || !body) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
